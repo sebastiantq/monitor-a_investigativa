@@ -21,10 +21,14 @@ while True:
 
 	curr_time = int(round(time.time() * 1000)) # Obtenemos el tiempo actual en milisegundos
 
-	if (((sample[1] >= flex_thres) or (sample[0] >= flex_thres))): # Verificamos si se detecto algun pico en uno de los brazos
-		prev_time = int(round(time.time() * 1000)) # Atualizamos el tiempo de la última flexión
+	if (sample[0] >= flex_thres): # Verificamos si hay un pico en el brazo
+		if(curr_time - 500 > prev_time): # Verificamos que haya un delay entre flexiones para que funcione correctamente
+			if(curr_time - 1000 > prev_time): # Scroll hacia arriba o hacia abajo dependiendo de si se hacen o no flexiones seguidas
+				print("Arriba")
+				pyautogui.scroll(500)
+			else:
+				print("Abajo")
+				pyautogui.scroll(-1000) # El desplazamiento hacia abajo debe de ser el doble del que se hace hacia arriba,
+										# dado que primero subirá y luego bajará, si fuese igual quedaría en el mismo lugar
 
-		if(sample[1] > sample[0]): # Scroll hacia arriba o abajo dependiendo de la intesidad de las señales
-			pyautogui.scroll(50)
-		else:
-			pyautogui.scroll(-50)
+			prev_time = int(round(time.time() * 1000)) # Actualizamos el tiempo de la última flexión

@@ -88,51 +88,24 @@ if __name__ == "__main__":
                 x = aux_data[0]
                 z = aux_data[2]
 
-                print("X: " + str(x) + ", Y: " + str(z))
-
                 # Comenzamos a identificar los movimientos de la cabeza
-                if z > 0.5 and z_prev < z and not space_pressed: # Hacemos que la pieza descienda
-                    pyautogui.press('space')
-                    space_pressed = True
-                else:
-                    if 0.075 + x_start < x < 0.2 + x_start and not left_once: # Movimiento hacia la izquierda
-                        pyautogui.press('left')
-                        left_once = True
-                        space_pressed = False
-                    elif -0.075 + x_start > x > -0.2 + x_start and not right_once: # Movimiento hacia la derecha
-                        pyautogui.press('right')
-                        right_once = True
-                        space_pressed = False
-                    elif x > 0.2 + x_start and x_prev < x: # Movimiento hacia la izquierda
-                        pyautogui.press('left')
-                        left_once = False
-                        space_pressed = False
-                    elif x < -0.2 + x_start and x_prev > x: # Movimiento hacia la derecha
-                        pyautogui.press('right')
-                        right_once = False
-                        space_pressed = False
-                    elif -0.075 + x_start < x < 0.075 + x_start: # No hay movimiento
-                        left_once = False
-                        right_once = False
-                        space_pressed = False
-                    elif z < 0.5:
-                        space_pressed = False
-                if z > 0.5:
-                    space_pressed = True
+                if 0.075 + x_start < x < 0.2 + x_start and not left_once: # Movimiento hacia la izquierda
+                    pyautogui.press('left')
+                    left_once = True
+                elif -0.075 + x_start > x > -0.2 + x_start and not right_once: # Movimiento hacia la derecha
+                    pyautogui.press('right')
+                    right_once = True
+                elif x > 0.2 + x_start and x_prev < x: # Movimiento hacia la izquierda
+                    pyautogui.press('left')
+                    left_once = False
+                elif x < -0.2 + x_start and x_prev > x: # Movimiento hacia la derecha
+                    pyautogui.press('right')
+                    right_once = False
+                elif -0.075 + x_start < x < 0.075 + x_start: # No hay movimiento
+                    left_once = False
+                    right_once = False
+
                 x_prev = x
                 z_prev = z
-            else:
-                emg_data = obj.get('data')
-                fp1 = emg_data[0]
-                fp2 = emg_data[1]
-                to_continue = 0
-                for i in range(2, 8):
-                    if emg_data[i] > 0.8:
-                        to_continue += 1
-                if (to_continue < 4):
-                    if fp2 < 0.9:
-                        rotated = False
-                    elif (fp2 > 0.9) and not rotated:
-                        pyautogui.press('up')
-                        rotated = True
+
             numSamples += 1

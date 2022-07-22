@@ -13,18 +13,20 @@ inlet = StreamInlet(streams[0])
 print("EMG stream found!")
 
 # Inicializamos las variables
-prev_time = 0 # Tiempo en que se realizó la última flexión
-flex_thres = 1.0 # Umbral de flexión
+time_thres = 2000 # Tiempo entre contracciones musculares
+prev_time = 0 # Tiempo de la última contracción
+blink_thres = 0.95 # Umbral para detectar un pico
 
 while True:
 	sample, timestamp = inlet.pull_sample() # Obtenemos la data EMG
 
 	curr_time = int(round(time.time() * 1000)) # Obtenemos el tiempo actual en milisegundos
 
-	if (((sample[1] >= flex_thres) or (sample[0] >= flex_thres))): # Verificamos si se detecto algun pico en uno de los brazos
-		prev_time = int(round(time.time() * 1000)) # Atualizamos el tiempo de la última flexión
+	if(curr_time - time_thres > prev_time): # Verificamos que haya pasado el tiempo requerido entre contracciones
+		if (sample[0] >= blink_thres or sample[1] >= blink_thres): # Continuamos solo si al menos uno de las dos contracciones superal el umbral
+			prev_time = int(round(time.time() * 1000)) # Actualizamos el tiempo de la última contracción
 
-		if(sample[1] > sample[0]): # Scroll hacia arriba o abajo dependiendo de la intesidad de las señales
-			pyautogui.scroll(50)
-		else:
-			pyautogui.scroll(-50)
+			if(sample[1] > sample[0]): # Pasamos a la siguiente diapositiva o a la anterior dependiendo del musculo contraido
+				pyautogui.press('right')
+			else:
+				pyautogui.press('left')

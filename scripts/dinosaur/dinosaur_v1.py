@@ -1,3 +1,4 @@
+# Importamos las librerías requeridas para el script
 import argparse
 import time
 import numpy as np
@@ -10,11 +11,10 @@ import brainflow
 from brainflow.board_shim import BoardShim, BrainFlowInputParams
 from brainflow.data_filter import DataFilter, FilterTypes, AggOperations, WindowFunctions
 
-
 def main ():
     parser = argparse.ArgumentParser ()
 
-    # use docs to check which parameters are required for specific board, e.g. for Cyton - set serial port
+    # Configuramos los parámetros para conectar con la Cyton Board
     parser.add_argument ('--timeout', type = int, help  = 'timeout for device discovery or connection', required = False, default = 0)
     parser.add_argument ('--ip-port', type = int, help  = 'ip port', required = False, default = 0)
     parser.add_argument ('--ip-protocol', type = int, help  = 'ip protocol, check IpProtocolType enum', required = False, default = 0)
@@ -38,13 +38,14 @@ def main ():
     params.ip_protocol = args.ip_protocol
     params.timeout = args.timeout
 
-    # initialize calibration and time variables
+    # Se inicializan las variables y se realiza la calibración
     time_thres =  100
     max_val = -100000000000
     vals_mean = 0
     num_samples = 5000
     samples = 0
 
+    # Configuraciones necesarias para la placa
     if (args.log):
         BoardShim.enable_dev_board_logger ()
     else:
@@ -53,32 +54,30 @@ def main ():
     board = BoardShim (args.board_id, params)
     board.prepare_session ()
 
-
-    # turn off SRB2 in Channel 1
     if args.board_id == brainflow.board_shim.BoardIds.CYTON_BOARD.value:
         board.config_board ('x1060000X')
 
     board.start_stream (45000, args.streamer_params)
 
-    # start calibration
+    # Iniciamos la calibración
 
     print("Starting calibration")
-    time.sleep(5) # wait for data to stabilize
-    data = board.get_board_data() # clear buffer
+    time.sleep(5) # Delay para estabilizar la conexión
+    data = board.get_board_data() # Limpiamos el buffer
 
     print("Relax and flex your arm a few times")
 
     while(samples < num_samples):
 
-        data = board.get_board_data() # get data
+        data = board.get_board_data() # Obtenemos la información de la placa
         if(len(data[1]) > 0):
-            DataFilter.perform_rolling_filter (data[1], 2, AggOperations.MEAN.value) # denoise data
-            vals_mean += sum([data[1,i]/num_samples for i in range(len(data[1]))]) # update mean
+            DataFilter.perform_rolling_filter (data[1], 2, AggOperations.MEAN.value) # Eliminamos el ruido de la señal
+            vals_mean += sum([data[1,i]/num_samples for i in range(len(data[1]))]) # Actualizamos el promedio de la señal
             samples += len(data[1])
             if(np.amax(data[1]) > max_val):
-                max_val = np.amax(data[1]) # update max
+                max_val = np.amax(data[1]) # Actualizamos el pico máximo alcanzado
 
-    flex_thres = 0.5*((max_val - vals_mean)**2) # calculate flex threshold - percentage needs to be set per person
+    flex_thres = 0.5*((max_val - vals_mean)**2) # Se calcula el umbral de flexión
 
     print("Mean Value")
     print(vals_mean)
@@ -87,24 +86,24 @@ def main ():
     print("Threshold")
     print(flex_thres)
 
-    # end calibration
+    # Se termina la calibración
 
-    # start game
+    # A partir de aqui se puede jugar
 
     print("Calibration complete. Start!")
     prev_time = int(round(time.time() * 1000))
 
     while True:
 
-        data = board.get_board_data() # get data
+        data = board.get_board_data() # Obtenemos la data del stream
 
         if(len(data[1]) > 0):
-            DataFilter.perform_rolling_filter (data[1], 2, AggOperations.MEAN.value) # denoise data
-            if((int(round(time.time() * 1000)) - time_thres) > prev_time): # if enough time has gone by since the last flex
-                prev_time = int(round(time.time() * 1000)) # update time
+            DataFilter.perform_rolling_filter (data[1], 2, AggOperations.MEAN.value) # Eliminamos el ruido de la señal
+            if((int(round(time.time() * 1000)) - time_thres) > prev_time): # Validamos que haya pasado cierto tiempo desde la última flexión
+                prev_time = int(round(time.time() * 1000)) # Actualizamos el tiempo de la última flexión
                 for element in data[1]:
-                    if(((element - vals_mean)**2) >= flex_thres): # if above threshold
-                        pyautogui.press('space') # jump
+                    if(((element - vals_mean)**2) >= flex_thres): # Continuamos si se supera el umbral
+                        pyautogui.press('space') # Saltamos
                         break
 
     board.stop_stream ()
